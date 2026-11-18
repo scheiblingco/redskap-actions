@@ -1,0 +1,46 @@
+name: Redskap get token
+description: "Get a short-lived Redskap token through GitHub Actions trusted publishing (OIDC). Requires `permissions: id-token: write`."
+author: scheiblingco
+branding:
+  icon: key
+  color: red
+
+inputs:
+  url:
+    description: Base URL of the Redskap instance, e.g. https://packages.example.com
+    required: true
+  audience:
+    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `url`.
+    required: false
+    default: ""
+  exchange:
+    description: Exchange the GitHub ID token for a Redskap token (valid for the server's `exchange_ttl`). Set to `false` to return the raw GitHub ID token, which expires after a few minutes.
+    required: false
+    default: "true"
+  export-env:
+    description: Also export the token as `REDSKAP_TOKEN` for later steps in the job.
+    required: false
+    default: "false"
+
+outputs:
+  token:
+    description: The token (masked in logs)
+    value: ${{ steps.token.outputs.token }}
+  expires-at:
+    description: Expiry time of the token (RFC 3339)
+    value: ${{ steps.token.outputs.expires-at }}
+  subject:
+    description: The Redskap subject the token authenticates as, e.g. github:owner/repo
+    value: ${{ steps.token.outputs.subject }}
+
+runs:
+  using: composite
+  steps:
+    - id: token
+      shell: bash
+      run: "${GITHUB_ACTION_PATH}/../scripts/get-token.sh"
+      env:
+        REDSKAP_URL: ${{ inputs.url }}
+        REDSKAP_AUDIENCE: ${{ inputs.audience }}
+        REDSKAP_EXCHANGE: ${{ inputs.exchange }}
+        REDSKAP_EXPORT_ENV: ${{ inputs.export-env }}

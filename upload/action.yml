@@ -1,0 +1,71 @@
+name: Redskap upload
+description: Upload packages (Helm charts, Debian packages) to a Redskap repository, authenticating with trusted publishing or a given token.
+author: scheiblingco
+branding:
+  icon: upload-cloud
+  color: red
+
+inputs:
+  url:
+    description: "Base URL of the Redskap instance, e.g. https://packages.example.com. With `vhost: true`, the repository's own domain."
+    required: true
+  repository:
+    description: "Redskap repository ID, e.g. bookworm-main. Not needed with `vhost: true`."
+    required: false
+    default: ""
+  type:
+    description: "Package type: helm or debian"
+    required: true
+  files:
+    description: Files to upload, one path or glob per line (`**` is supported). For Helm, a `<chart>.tgz.prov` next to a chart is uploaded with it.
+    required: true
+  token:
+    description: "An already fetched Redskap token (e.g. from get-token). If empty, one is fetched through trusted publishing, which requires `permissions: id-token: write`."
+    required: false
+    default: ""
+  audience:
+    description: OIDC audience to request when fetching a token. Defaults to `url`.
+    required: false
+    default: ""
+  dist:
+    description: "debian: distribution, e.g. bookworm"
+    required: false
+    default: ""
+  component:
+    description: "debian: component, e.g. main"
+    required: false
+    default: main
+  force:
+    description: "helm: replace an existing chart version with different content instead of failing with 409"
+    required: false
+    default: "false"
+  vhost:
+    description: Set to `true` when `url` is the repository's own domain (vhost routing) rather than the instance base URL.
+    required: false
+    default: "false"
+
+outputs:
+  uploaded:
+    description: JSON array of the uploaded files
+    value: ${{ steps.upload.outputs.uploaded }}
+  count:
+    description: Number of uploaded files
+    value: ${{ steps.upload.outputs.count }}
+
+runs:
+  using: composite
+  steps:
+    - id: upload
+      shell: bash
+      run: "${GITHUB_ACTION_PATH}/../scripts/upload.sh"
+      env:
+        REDSKAP_URL: ${{ inputs.url }}
+        REDSKAP_REPOSITORY: ${{ inputs.repository }}
+        REDSKAP_TYPE: ${{ inputs.type }}
+        REDSKAP_FILES: ${{ inputs.files }}
+        REDSKAP_TOKEN_INPUT: ${{ inputs.token }}
+        REDSKAP_AUDIENCE: ${{ inputs.audience }}
+        REDSKAP_DIST: ${{ inputs.dist }}
+        REDSKAP_COMPONENT: ${{ inputs.component }}
+        REDSKAP_FORCE: ${{ inputs.force }}
+        REDSKAP_VHOST: ${{ inputs.vhost }}

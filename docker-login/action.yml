@@ -1,0 +1,45 @@
+name: Redskap docker login
+description: Log in to a Redskap OCI/Docker registry with GitHub Actions trusted publishing (or a given token).
+author: scheiblingco
+branding:
+  icon: log-in
+  color: red
+
+inputs:
+  url:
+    description: Base URL of the Redskap instance, used for the token exchange, e.g. https://packages.example.com
+    required: true
+  registry:
+    description: Registry host to log in to, e.g. docker.packages.example.com. Defaults to the host of `url` (path-style routing).
+    required: false
+    default: ""
+  token:
+    description: "An already fetched Redskap token (e.g. from get-token). If empty, one is fetched through trusted publishing, which requires `permissions: id-token: write`."
+    required: false
+    default: ""
+  audience:
+    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `url`.
+    required: false
+    default: ""
+  username:
+    description: Username for docker login. Redskap ignores it.
+    required: false
+    default: redskap
+
+outputs:
+  registry:
+    description: The registry host that was logged in to
+    value: ${{ steps.login.outputs.registry }}
+
+runs:
+  using: composite
+  steps:
+    - id: login
+      shell: bash
+      run: "${GITHUB_ACTION_PATH}/../scripts/docker-login.sh"
+      env:
+        REDSKAP_URL: ${{ inputs.url }}
+        REDSKAP_REGISTRY: ${{ inputs.registry }}
+        REDSKAP_TOKEN_INPUT: ${{ inputs.token }}
+        REDSKAP_AUDIENCE: ${{ inputs.audience }}
+        REDSKAP_USERNAME: ${{ inputs.username }}
