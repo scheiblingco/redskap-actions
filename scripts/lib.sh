@@ -17,8 +17,18 @@ require_cmd() {
 normalize_url() {
   local u="${1%/}"
   while [[ "$u" == */ ]]; do u="${u%/}"; done
-  [[ "$u" =~ ^https?:// ]] || die "url must start with https:// or http:// (got '$1')"
+  [[ "$u" =~ ^https?:// ]] || die "instance must start with https:// or http:// (got '$1')"
   printf '%s' "$u"
+}
+
+# vhost_url prints the vhost as a URL without trailing slash. A bare host
+# (docker.example.com) gets the scheme of the instance URL.
+#   vhost_url <vhost> <instance-url>
+vhost_url() {
+  local v="$1" scheme="${2%%://*}"
+  [[ "$v" =~ ^https?:// ]] || v="${scheme}://${v}"
+  while [[ "$v" == */ ]]; do v="${v%/}"; done
+  printf '%s' "$v"
 }
 
 # url_host prints the host[:port] part of a URL.

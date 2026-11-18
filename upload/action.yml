@@ -6,11 +6,11 @@ branding:
   color: red
 
 inputs:
-  url:
-    description: "Base URL of the Redskap instance, e.g. https://packages.example.com. With `vhost: true`, the repository's own domain."
+  instance:
+    description: Primary URL of the Redskap instance, e.g. https://packages.example.com. Used for the token exchange, so it must not be a repository vhost.
     required: true
   repository:
-    description: "Redskap repository ID, e.g. bookworm-main. Not needed with `vhost: true`."
+    description: Redskap repository ID, e.g. bookworm-main. Not needed when `vhost` is set.
     required: false
     default: ""
   type:
@@ -24,7 +24,7 @@ inputs:
     required: false
     default: ""
   audience:
-    description: OIDC audience to request when fetching a token. Defaults to `url`.
+    description: OIDC audience to request when fetching a token. Defaults to `instance`.
     required: false
     default: ""
   dist:
@@ -40,9 +40,9 @@ inputs:
     required: false
     default: "false"
   vhost:
-    description: Set to `true` when `url` is the repository's own domain (vhost routing) rather than the instance base URL.
+    description: The repository's vhost domain, e.g. debs.packages.example.com (a URL is accepted too; a bare host uses the scheme of `instance`). Packages are uploaded there instead of to `instance`/r/`repository`/`type`.
     required: false
-    default: "false"
+    default: ""
 
 outputs:
   uploaded:
@@ -59,7 +59,7 @@ runs:
       shell: bash
       run: "${GITHUB_ACTION_PATH}/../scripts/upload.sh"
       env:
-        REDSKAP_URL: ${{ inputs.url }}
+        REDSKAP_INSTANCE: ${{ inputs.instance }}
         REDSKAP_REPOSITORY: ${{ inputs.repository }}
         REDSKAP_TYPE: ${{ inputs.type }}
         REDSKAP_FILES: ${{ inputs.files }}

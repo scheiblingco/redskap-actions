@@ -6,11 +6,11 @@ branding:
   color: red
 
 inputs:
-  url:
-    description: Base URL of the Redskap instance, used for the token exchange, e.g. https://packages.example.com
+  instance:
+    description: Primary URL of the Redskap instance, e.g. https://packages.example.com. Used for the token exchange, so it must not be a repository vhost.
     required: true
-  registry:
-    description: Registry host to log in to, e.g. docker.packages.example.com. Defaults to the host of `url` (path-style routing).
+  vhost:
+    description: The registry's vhost domain, e.g. docker.packages.example.com (a URL is accepted too). Defaults to the host of `instance` for path-style repositories.
     required: false
     default: ""
   token:
@@ -18,7 +18,7 @@ inputs:
     required: false
     default: ""
   audience:
-    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `url`.
+    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `instance`.
     required: false
     default: ""
   username:
@@ -38,8 +38,8 @@ runs:
       shell: bash
       run: "${GITHUB_ACTION_PATH}/../scripts/docker-login.sh"
       env:
-        REDSKAP_URL: ${{ inputs.url }}
-        REDSKAP_REGISTRY: ${{ inputs.registry }}
+        REDSKAP_INSTANCE: ${{ inputs.instance }}
+        REDSKAP_VHOST: ${{ inputs.vhost }}
         REDSKAP_TOKEN_INPUT: ${{ inputs.token }}
         REDSKAP_AUDIENCE: ${{ inputs.audience }}
         REDSKAP_USERNAME: ${{ inputs.username }}

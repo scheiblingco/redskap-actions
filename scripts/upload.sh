@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Inputs (env): REDSKAP_URL, REDSKAP_REPOSITORY, REDSKAP_TYPE, REDSKAP_FILES,
+# Inputs (env): REDSKAP_INSTANCE, REDSKAP_REPOSITORY, REDSKAP_TYPE, REDSKAP_FILES,
 #   REDSKAP_TOKEN_INPUT, REDSKAP_AUDIENCE, REDSKAP_DIST, REDSKAP_COMPONENT,
 #   REDSKAP_FORCE, REDSKAP_VHOST
 set -euo pipefail
@@ -8,21 +8,28 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 require_cmd curl jq
 
-base=$(normalize_url "${REDSKAP_URL:?url input is required}")
+base=$(normalize_url "${REDSKAP_INSTANCE:?instance input is required}")
 type="${REDSKAP_TYPE:?type input is required}"
 repo="${REDSKAP_REPOSITORY:-}"
 force="${REDSKAP_FORCE:-false}"
 
+component="${REDSKAP_COMPONENT:-main}"
+
 case "$type" in
-  helm | debian) ;;
+  helm) ;;
+  debian)
+    [[ -n "${REDSKAP_DIST:-}" ]] || die "dist input is required for debian uploads"
+    ;;
   *) die "Unsupported type '$type'. Supported: helm, debian" ;;
 esac
 
-# Repository endpoint: path style (/r/{repo}/{frontend}) or vhost (domain root).
-if [[ "${REDSKAP_VHOST:-false}" == "true" ]]; then
-  endpoint="$base"
+# Repository endpoint: vhost (the repository's own domain root) or path style
+# (/r/{repo}/{frontend}) on the instance. The token exchange always goes to the
+# instance: vhost domains rewrite every path into the repository, including /api/v1.
+if [[ -n "${REDSKAP_VHOST:-}" ]]; then
+  endpoint=$(vhost_url "$REDSKAP_VHOST" "$base")
 else
-  [[ -n "$repo" ]] || die "repository input is required (or set vhost: true and point url at the repository's domain)"
+  [[ -n "$repo" ]] || die "repository input is required (or set vhost for a vhost repository)"
   endpoint="${base}/r/${repo}/${type}"
 fi
 
@@ -69,10 +76,8 @@ upload_one() {
       ;;
     debian)
       [[ "$f" == *.deb ]] || die "'$f' is not a .deb file"
-      [[ -n "${REDSKAP_DIST:-}" ]] || die "dist input is required for debian uploads"
-      [[ -n "${REDSKAP_COMPONENT:-}" ]] || die "component input is required for debian uploads"
       local q
-      q="dist=$(jq -rn --arg v "$REDSKAP_DIST" '$v|@uri')&component=$(jq -rn --arg v "$REDSKAP_COMPONENT" '$v|@uri')"
+      q="dist=$(jq -rn --arg v "$REDSKAP_DIST" '$v|@uri')&component=$(jq -rn --arg v "$component" '$v|@uri')"
       [[ -n "$query" ]] && q+="&${query}"
       url="${endpoint}/upload?${q}"
       args=(-X PUT -T "$f")

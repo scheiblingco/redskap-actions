@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Inputs (env): REDSKAP_URL, REDSKAP_AUDIENCE, REDSKAP_EXCHANGE, REDSKAP_EXPORT_ENV
+# Inputs (env): REDSKAP_INSTANCE, REDSKAP_AUDIENCE, REDSKAP_EXCHANGE, REDSKAP_EXPORT_ENV
 set -euo pipefail
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 require_cmd curl jq
 
-base=$(normalize_url "${REDSKAP_URL:?url input is required}")
+base=$(normalize_url "${REDSKAP_INSTANCE:?instance input is required}")
 audience="${REDSKAP_AUDIENCE:-$base}"
 
 fetch_id_token "$audience"

@@ -6,11 +6,11 @@ branding:
   color: red
 
 inputs:
-  url:
-    description: Base URL of the Redskap instance, e.g. https://packages.example.com
+  instance:
+    description: Primary URL of the Redskap instance, e.g. https://packages.example.com. Used for the token exchange, so it must not be a repository vhost.
     required: true
   audience:
-    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `url`.
+    description: OIDC audience to request. Must match `middleware.github_actions.audience` on the server. Defaults to `instance`.
     required: false
     default: ""
   exchange:
@@ -40,7 +40,7 @@ runs:
       shell: bash
       run: "${GITHUB_ACTION_PATH}/../scripts/get-token.sh"
       env:
-        REDSKAP_URL: ${{ inputs.url }}
+        REDSKAP_INSTANCE: ${{ inputs.instance }}
         REDSKAP_AUDIENCE: ${{ inputs.audience }}
         REDSKAP_EXCHANGE: ${{ inputs.exchange }}
         REDSKAP_EXPORT_ENV: ${{ inputs.export-env }}
